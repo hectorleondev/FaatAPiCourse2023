@@ -34,7 +34,7 @@ class TodoRequest(BaseModel):
 async def read_all(user: user_dependency, db: db_dependency):
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
-    return db.query(Todos).filter(Todos.user_id == user.get("id", 0)).all()
+    return db.query(Todos).filter(Todos.owner_id == user.get("id", 0)).all()
 
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
@@ -42,7 +42,7 @@ async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Pat
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
     todo_model = db.query(Todos).filter(Todos.id == todo_id)\
-        .filter(Todos.user_id == user.get('id', 0)).first()
+        .filter(Todos.owner_id == user.get('id', 0)).first()
 
     if todo_model is not None:
         return todo_model
@@ -53,7 +53,7 @@ async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Pat
 async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
-    todo_model = Todos(**todo_request.dict(), user_id=user.get('id'))
+    todo_model = Todos(**todo_request.dict(), owner_id=user.get('id'))
     db.add(todo_model)
     db.commit()
 
@@ -66,7 +66,7 @@ async def update_todo(user: user_dependency,
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
     todo_model = db.query(Todos).filter(Todos.id == todo_id)\
-        .filter(Todos.user_id == user.get('id', 0)).first()
+        .filter(Todos.owner_id == user.get('id', 0)).first()
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found.")
 
@@ -86,9 +86,9 @@ async def delete_todo(user: user_dependency,
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
     todo_model = db.query(Todos).filter(Todos.id == todo_id)\
-        .filter(Todos.user_id == user.get('id', 0)).first()
+        .filter(Todos.owner_id == user.get('id', 0)).first()
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found.")
     db.query(Todos).filter(Todos.id == todo_id)\
-        .filter(Todos.user_id == user.get('id', 0)).delete()
+        .filter(Todos.owner_id == user.get('id', 0)).delete()
     db.commit()
